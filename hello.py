@@ -1,37 +1,41 @@
 import cv2
-import controller as cnt
 from cvzone.HandTrackingModule import HandDetector
+import controller as cnt 
 
-detector=HandDetector(detectionCon=0.8,maxHands=1)
-
-video=cv2.VideoCapture(0)
+# Inisialisasi detektor tangan (maks 2 tangan)
+detector = HandDetector(detectionCon=0.8, maxHands=2)
+video = cv2.VideoCapture(0)
 
 while True:
-    ret,frame=video.read()
-    frame=cv2.flip(frame,1)
-    hands,img=detector.findHands(frame)
+    ret, frame = video.read()
+    frame = cv2.flip(frame, 1)
+
+    hands, img = detector.findHands(frame)
+
+    led_data = [0]*10
+    led_data = [0,0,0,0,0,0,0,0,0,0]
+
     if hands:
-        lmList=hands[0]
-        fingerUp=detector.fingersUp(lmList)
+        for hand in hands:
+            fingerUp = detector.fingersUp(hand)
+            jumlah_jari = fingerUp.count(1)
 
-        print(fingerUp)
-        cnt.led(fingerUp)
-        if fingerUp==[0,0,0,0,0]:
-            cv2.putText(frame,'Jari Anda:0',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-        elif fingerUp==[0,1,0,0,0]:
-            cv2.putText(frame,'Jari Anda:1',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)    
-        elif fingerUp==[0,1,1,0,0]:
-            cv2.putText(frame,'Jari Anda:2',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-        elif fingerUp==[0,1,1,1,0]:
-            cv2.putText(frame,'Jari Anda:3',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-        elif fingerUp==[0,1,1,1,1]:
-            cv2.putText(frame,'Jari Anda:4',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-        elif fingerUp==[1,1,1,1,1]:
-            cv2.putText(frame,'Jari Anda:5',(20,460),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA) 
+            if hand["type"] == "Right":
+                for i in range(jumlah_jari):
+                    led_data[i] = 1 
+            elif hand["type"] == "Left":
+                for i in range(jumlah_jari):
+                    led_data[5 + i] = 1 
 
-    cv2.imshow("LED PROGRAM BY HAIDAR",frame)
-    k=cv2.waitKey(1)
-    if k==ord("k"):
+        total_jari = led_data.count(1)
+        cv2.putText(frame, f'Jari Anda: {total_jari}', (20, 460),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+
+        cnt.led(led_data)
+
+    cv2.imshow("LED PROGRAM BY KELOMPOK 1", frame)
+
+    if cv2.waitKey(1) == ord("q"):
         break
 
 video.release()
